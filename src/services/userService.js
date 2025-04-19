@@ -134,8 +134,10 @@ let createNewUser = (data) => {
           lastName: data.lastName,
           address: data.address,
           phonenumber: data.phonenumber,
-          gender: data.gender === "1" ? true : false,
+          gender: data.gender,
           roleId: data.roleId,
+          positionId: data.positionId,
+          image: data.avatar,
         });
         resolve({
           errCode: 0,
@@ -178,7 +180,7 @@ let updateUserData = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
       console.log("Received data:", data); // 🔍 Log để kiểm tra đầu vào
-      if (!data.id) {
+      if (!data.id || !data.roleId || !data.positionId || !data.gender) {
         console.log("Missing user ID!"); // 🔍 Log nếu thiếu ID
         return resolve({
           errCode: 2,
@@ -193,6 +195,14 @@ let updateUserData = (data) => {
         user.firstName = data.firstName;
         user.lastName = data.lastName;
         user.address = data.address;
+        user.roleId = data.roleId;
+        user.positionId = data.positionId;
+        user.gender = data.gender;
+        user.phonenumber = data.phonenumber;
+        if (data.avatar) {
+          user.image = data.avatar;
+        }
+
         await user.save();
 
         // await db.User.save(
