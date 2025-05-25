@@ -1,7 +1,8 @@
 import { where } from "sequelize";
 import db, { sequelize } from "../models/index";
 require("dotenv").config();
-let createSpecialty = (data) => {
+
+let createHandbook = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
       if (
@@ -15,7 +16,7 @@ let createSpecialty = (data) => {
           errMessage: "Missing required parameter!",
         });
       } else {
-        await db.Specialty.create({
+        await db.Handbook.create({
           name: data.name,
           image: data.imageBase64,
           descriptionHTML: data.descriptionHTML,
@@ -31,10 +32,11 @@ let createSpecialty = (data) => {
     }
   });
 };
-let getAllSpecialty = () => {
+
+let getAllHandbook = () => {
   return new Promise(async (resolve, reject) => {
     try {
-      let data = await db.Specialty.findAll({});
+      let data = await db.Handbook.findAll({});
       if (data && data.length > 0) {
         data.map((item) => {
           item.image = new Buffer(item.image, "base64").toString("binary");
@@ -52,18 +54,63 @@ let getAllSpecialty = () => {
   });
 };
 
-let getDetailSpecialtyById = (specialtyId) => {
+let getDetailHandbookById = (inputId) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!specialtyId) {
+      if (!inputId) {
+        return resolve({
+          errCode: 1,
+          errMessage: "Missing required parameter!",
+        });
+      } else {
+        let data = await db.Handbook.findOne({
+          where: {
+            id: inputId,
+          },
+          attributes: [
+            "name",
+            "image",
+            "descriptionHTML",
+            "descriptionMarkdown",
+          ],
+        });
+        if (data && data.image) {
+          data.image = new Buffer(data.image, "base64").toString("binary");
+        }
+        if (data) {
+          let doctorHandbook = [];
+
+          doctorHandbook = await db.Doctor_Infor.findAll({
+            where: { handbookId: inputId },
+            attributes: ["doctorId", "provinceId"],
+          });
+
+          data.doctorHandbook = doctorHandbook;
+        } else data = {};
+        return resolve({
+          errMessage: "ok",
+          errCode: 0,
+          data,
+        });
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+
+let getDetailHandbookByIdNew = (handbookId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!handbookId) {
         return resolve({
           errCode: 1,
           errMessage: "Missing required parameter!",
         });
       }
 
-      let data = await db.Specialty.findOne({
-        where: { id: specialtyId },
+      let data = await db.Handbook.findOne({
+        where: { id: handbookId },
         attributes: [
           "id",
           "name",
@@ -89,49 +136,50 @@ let getDetailSpecialtyById = (specialtyId) => {
   });
 };
 
-let updateSpecialty = (inputData) => {
+let updateHandbook = (inputData) => {
   return new Promise(async (resolve, reject) => {
     try {
       if (!inputData.id) {
         return resolve({
           errCode: 1,
-          errMessage: "Missing specialty ID!",
+          errMessage: "Missing handbook ID!",
         });
       }
 
-      let specialty = await db.Specialty.findOne({
+      let handbook = await db.Handbook.findOne({
         where: { id: inputData.id },
         raw: false,
       });
 
-      if (!specialty) {
+      if (!handbook) {
         return resolve({
           errCode: 2,
-          errMessage: "Specialty not found!",
+          errMessage: "Handbook not found!",
         });
       }
 
-      specialty.name = inputData.name;
-      specialty.descriptionHTML = inputData.descriptionHTML;
-      specialty.descriptionMarkdown = inputData.descriptionMarkdown;
+      handbook.name = inputData.name;
+      handbook.descriptionHTML = inputData.descriptionHTML;
+      handbook.descriptionMarkdown = inputData.descriptionMarkdown;
 
       if (inputData.image) {
-        specialty.image = inputData.image;
+        handbook.image = inputData.image;
       }
 
-      await specialty.save();
+      await handbook.save();
 
       return resolve({
         errCode: 0,
         errMessage: "Update successful!",
       });
     } catch (e) {
-      console.log("Error in updateSpecialty:", e);
+      console.log("Error in updateHandbook:", e);
       reject(e);
     }
   });
 };
-let deleteSpecialty = (id) => {
+
+let deleteHandbook = (id) => {
   return new Promise(async (resolve, reject) => {
     try {
       if (!id) {
@@ -141,7 +189,7 @@ let deleteSpecialty = (id) => {
         });
       }
 
-      await db.Specialty.destroy({
+      await db.Handbook.destroy({
         where: { id: id },
       });
 
@@ -150,58 +198,17 @@ let deleteSpecialty = (id) => {
         errMessage: "Delete successful!",
       });
     } catch (e) {
+      console.log("Error in deleteHandbook:", e);
       reject(e);
     }
   });
 };
-let getDetailSpecialtyByIdNew = (inputId, location) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      if (!inputId || !location) {
-        return resolve({
-          errCode: 1,
-          errMessage: "Missing required parameter!",
-        });
-      } else {
-        let data = await db.Specialty.findOne({
-          where: {
-            id: inputId,
-          },
-          attributes: ["descriptionHTML", "descriptionMarkdown"],
-        });
-        if (data) {
-          let doctorSpecialty = [];
-          if (location === "ALL") {
-            doctorSpecialty = await db.Doctor_Infor.findAll({
-              where: { specialtyId: inputId },
-              attributes: ["doctorId", "provinceId"],
-            });
-          } else {
-            // find by location
-            doctorSpecialty = await db.Doctor_Infor.findAll({
-              where: { specialtyId: inputId, provinceId: location },
-              attributes: ["doctorId", "provinceId"],
-            });
-          }
 
-          data.doctorSpecialty = doctorSpecialty;
-        } else data = {};
-        return resolve({
-          errMessage: "ok",
-          errCode: 0,
-          data,
-        });
-      }
-    } catch (e) {
-      reject(e);
-    }
-  });
-};
 module.exports = {
-  createSpecialty: createSpecialty,
-  getAllSpecialty: getAllSpecialty,
-  getDetailSpecialtyById: getDetailSpecialtyById,
-  updateSpecialty: updateSpecialty,
-  deleteSpecialty: deleteSpecialty,
-  getDetailSpecialtyByIdNew: getDetailSpecialtyByIdNew,
+  createHandbook,
+  getAllHandbook,
+  getDetailHandbookById,
+  updateHandbook,
+  deleteHandbook,
+  getDetailHandbookByIdNew,
 };

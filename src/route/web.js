@@ -4,6 +4,9 @@ import userController from "../controllers/userController";
 import doctorController from "../controllers/doctorController";
 import patientController from "../controllers/patientController";
 import specialtyController from "../controllers/specialtyController";
+import clinicController from "../controllers/clinicController";
+import handbookController from "../controllers/handbookController";
+import aboutController from "../controllers/aboutController";
 let router = express.Router();
 let initWebRoutes = (app) => {
   router.get("/", homeController.getHomePage);
@@ -27,6 +30,7 @@ let initWebRoutes = (app) => {
   router.get("/api/top-doctor-home", doctorController.getTopDoctorHome);
 
   router.get("/api/get-all-doctors", doctorController.getAllDoctors);
+
   router.post("/api/save-infor-doctors", doctorController.postInforDoctor);
 
   router.get(
@@ -60,6 +64,65 @@ let initWebRoutes = (app) => {
     patientController.postVerifyBookAppointment
   );
   router.post("/api/create-new-specialty", specialtyController.createSpecialty);
+  //
+  router.get("/api/get-specialty", specialtyController.getAllSpecialty);
+  router.get(
+    "/api/get-detail-specialty-by-id",
+    specialtyController.getDetailSpecialtyById
+  );
+  router.put("/api/update-specialty", specialtyController.updateSpecialty);
+  router.delete(
+    "/api/delete-specialty",
+    specialtyController.handleDeleteSpecialty
+  );
+
+  router.get(
+    "/api/get-detail-specialty-new-by-id",
+    specialtyController.getDetailSpecialtyByIdNew
+  );
+
+  router.post("/api/create-new-clinic", clinicController.createClinic);
+  router.get("/api/get-clinic", clinicController.getAllClinic);
+  router.get(
+    "/api/get-detail-clinic-by-id",
+    clinicController.getDetailClinicById
+  );
+  router.get(
+    "/api/get-detail-clinic-new-by-id",
+    clinicController.getDetailClinicByIdNew
+  );
+  router.put("/api/update-clinic", clinicController.updateClinic);
+  router.delete("/api/delete-clinic", clinicController.handleDeleteClinic);
+
+  // Lấy thông tin đặt lịch
+  router.get(
+    "/api/get-list-patient-for-dortor",
+    doctorController.getListPatientForDoctor
+  );
+
+  // Send remedy
+  router.post("/api/send-remedy", doctorController.sendKemedy);
+
+  // Hanbook
+  router.post("/api/create-new-handbook", handbookController.createHandbook);
+  router.get("/api/get-handbook", handbookController.getAllHandbook);
+  router.get(
+    "/api/get-detail-handbook-by-id",
+    handbookController.getDetailHandbookById
+  );
+  router.get(
+    "/api/get-detail-handbook-new-by-id",
+    handbookController.getDetailHandbookByIdNew
+  );
+  router.put("/api/update-handbook", handbookController.updateHandbook);
+  router.delete(
+    "/api/delete-handbook",
+    handbookController.handleDeleteHandbook
+  );
+
+  // About
+  router.post("/api/save-video-about", aboutController.updateOrCreateAbout);
+  router.get("/api/get-about", aboutController.getAboutContent);
   return app.use("/", router);
 };
 module.exports = initWebRoutes;

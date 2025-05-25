@@ -4,7 +4,7 @@ let postBookAppointment = async (req, res) => {
     let infor = await patientService.postBookAppointment(req.body);
     return res.status(200).json(infor);
   } catch (e) {
-    // console.log(e);
+    console.log("Toi dang gap loi: ", e);
     return res.status(200).json({
       errCode: 1,
       errMessage: "Missing required parameter!",

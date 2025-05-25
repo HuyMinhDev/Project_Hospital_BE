@@ -1,12 +1,13 @@
 import { where } from "sequelize";
 import db, { sequelize } from "../models/index";
 require("dotenv").config();
-let createSpecialty = (data) => {
+let createClinic = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
       if (
         !data.name ||
         !data.imageBase64 ||
+        !data.address ||
         !data.descriptionHTML ||
         !data.descriptionMarkdown
       ) {
@@ -15,8 +16,9 @@ let createSpecialty = (data) => {
           errMessage: "Missing required parameter!",
         });
       } else {
-        await db.Specialty.create({
+        await db.Clinic.create({
           name: data.name,
+          address: data.address,
           image: data.imageBase64,
           descriptionHTML: data.descriptionHTML,
           descriptionMarkdown: data.descriptionMarkdown,
@@ -31,10 +33,10 @@ let createSpecialty = (data) => {
     }
   });
 };
-let getAllSpecialty = () => {
+let getAllClinic = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
-      let data = await db.Specialty.findAll({});
+      let data = await db.Clinic.findAll({});
       if (data && data.length > 0) {
         data.map((item) => {
           item.image = new Buffer(item.image, "base64").toString("binary");
@@ -51,22 +53,67 @@ let getAllSpecialty = () => {
     }
   });
 };
-
-let getDetailSpecialtyById = (specialtyId) => {
+let getDetailClinicById = (inputId) => {
   return new Promise(async (resolve, reject) => {
     try {
-      if (!specialtyId) {
+      if (!inputId) {
+        return resolve({
+          errCode: 1,
+          errMessage: "Missing required parameter!",
+        });
+      } else {
+        let data = await db.Clinic.findOne({
+          where: {
+            id: inputId,
+          },
+          attributes: [
+            "name",
+            "address",
+            "image",
+            "descriptionHTML",
+            "descriptionMarkdown",
+          ],
+        });
+        if (data && data.image) {
+          data.image = new Buffer(data.image, "base64").toString("binary");
+        }
+        if (data) {
+          let doctorClinic = [];
+
+          doctorClinic = await db.Doctor_Infor.findAll({
+            where: { clinicId: inputId },
+            attributes: ["doctorId", "provinceId"],
+          });
+
+          data.doctorClinic = doctorClinic;
+        } else data = {};
+        return resolve({
+          errMessage: "ok",
+          errCode: 0,
+          data,
+        });
+      }
+    } catch (e) {
+      reject(e);
+    }
+  });
+};
+let getDetailClinicByIdNew = (clinicId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!clinicId) {
         return resolve({
           errCode: 1,
           errMessage: "Missing required parameter!",
         });
       }
 
-      let data = await db.Specialty.findOne({
-        where: { id: specialtyId },
+      let data = await db.Clinic.findOne({
+        where: { id: clinicId },
         attributes: [
           "id",
           "name",
+          "address",
           "descriptionHTML",
           "descriptionMarkdown",
           "image",
@@ -89,49 +136,51 @@ let getDetailSpecialtyById = (specialtyId) => {
   });
 };
 
-let updateSpecialty = (inputData) => {
+let updateClinic = (inputData) => {
   return new Promise(async (resolve, reject) => {
     try {
       if (!inputData.id) {
         return resolve({
           errCode: 1,
-          errMessage: "Missing specialty ID!",
+          errMessage: "Missing clinic ID!",
         });
       }
 
-      let specialty = await db.Specialty.findOne({
+      let clinic = await db.Clinic.findOne({
         where: { id: inputData.id },
         raw: false,
       });
 
-      if (!specialty) {
+      if (!clinic) {
         return resolve({
           errCode: 2,
-          errMessage: "Specialty not found!",
+          errMessage: "Clinic not found!",
         });
       }
 
-      specialty.name = inputData.name;
-      specialty.descriptionHTML = inputData.descriptionHTML;
-      specialty.descriptionMarkdown = inputData.descriptionMarkdown;
+      clinic.name = inputData.name;
+      clinic.address = inputData.address;
+      clinic.descriptionHTML = inputData.descriptionHTML;
+      clinic.descriptionMarkdown = inputData.descriptionMarkdown;
 
       if (inputData.image) {
-        specialty.image = inputData.image;
+        clinic.image = inputData.image;
       }
 
-      await specialty.save();
+      await clinic.save();
 
       return resolve({
         errCode: 0,
         errMessage: "Update successful!",
       });
     } catch (e) {
-      console.log("Error in updateSpecialty:", e);
+      console.log("Error in updateClinic:", e);
       reject(e);
     }
   });
 };
-let deleteSpecialty = (id) => {
+
+let deleteClinic = (id) => {
   return new Promise(async (resolve, reject) => {
     try {
       if (!id) {
@@ -141,7 +190,7 @@ let deleteSpecialty = (id) => {
         });
       }
 
-      await db.Specialty.destroy({
+      await db.Clinic.destroy({
         where: { id: id },
       });
 
@@ -150,58 +199,17 @@ let deleteSpecialty = (id) => {
         errMessage: "Delete successful!",
       });
     } catch (e) {
+      console.log("Error in deleteClinic:", e);
       reject(e);
     }
   });
 };
-let getDetailSpecialtyByIdNew = (inputId, location) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      if (!inputId || !location) {
-        return resolve({
-          errCode: 1,
-          errMessage: "Missing required parameter!",
-        });
-      } else {
-        let data = await db.Specialty.findOne({
-          where: {
-            id: inputId,
-          },
-          attributes: ["descriptionHTML", "descriptionMarkdown"],
-        });
-        if (data) {
-          let doctorSpecialty = [];
-          if (location === "ALL") {
-            doctorSpecialty = await db.Doctor_Infor.findAll({
-              where: { specialtyId: inputId },
-              attributes: ["doctorId", "provinceId"],
-            });
-          } else {
-            // find by location
-            doctorSpecialty = await db.Doctor_Infor.findAll({
-              where: { specialtyId: inputId, provinceId: location },
-              attributes: ["doctorId", "provinceId"],
-            });
-          }
 
-          data.doctorSpecialty = doctorSpecialty;
-        } else data = {};
-        return resolve({
-          errMessage: "ok",
-          errCode: 0,
-          data,
-        });
-      }
-    } catch (e) {
-      reject(e);
-    }
-  });
-};
 module.exports = {
-  createSpecialty: createSpecialty,
-  getAllSpecialty: getAllSpecialty,
-  getDetailSpecialtyById: getDetailSpecialtyById,
-  updateSpecialty: updateSpecialty,
-  deleteSpecialty: deleteSpecialty,
-  getDetailSpecialtyByIdNew: getDetailSpecialtyByIdNew,
+  createClinic: createClinic,
+  getAllClinic: getAllClinic,
+  getDetailClinicById: getDetailClinicById,
+  updateClinic: updateClinic,
+  deleteClinic: deleteClinic,
+  getDetailClinicByIdNew: getDetailClinicByIdNew,
 };

@@ -1,15 +1,12 @@
 "use strict";
 module.exports = {
   up: async (queryInterface, Sequelize) => {
-    await queryInterface.createTable("clinics", {
+    await queryInterface.createTable("abouts", {
       id: {
         allowNull: false,
         autoIncrement: true,
         primaryKey: true,
         type: Sequelize.INTEGER,
-      },
-      address: {
-        type: Sequelize.STRING,
       },
       name: {
         type: Sequelize.STRING,
@@ -23,7 +20,10 @@ module.exports = {
       image: {
         type: Sequelize.BLOB("long"),
       },
-
+      videoLink: {
+        type: Sequelize.STRING, // <-- thêm trường này
+        allowNull: true,
+      },
       createdAt: {
         allowNull: false,
         type: Sequelize.DATE,
@@ -35,6 +35,6 @@ module.exports = {
     });
   },
   down: async (queryInterface, Sequelize) => {
-    await queryInterface.dropTable("clinics");
+    await queryInterface.dropTable("abouts");
   },
 };

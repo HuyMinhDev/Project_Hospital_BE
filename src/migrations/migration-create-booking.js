@@ -20,6 +20,10 @@ module.exports = {
       date: {
         type: Sequelize.STRING,
       },
+      appointmentDate: {
+        type: Sequelize.STRING,
+      },
+
       timeType: {
         type: Sequelize.STRING,
       },
