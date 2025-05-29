@@ -8,69 +8,7 @@ let buildUrlEmail = (doctorId, token) => {
   let result = `${process.env.URL_REACT}/verify-booking?token=${token}&doctorId=${doctorId}`;
   return result;
 };
-// let postBookAppointment = (data) => {
-//   return new Promise(async (resolve, reject) => {
-//     try {
-//       if (
-//         !data.email ||
-//         !data.doctorId ||
-//         !data.date ||
-//         !data.timeType ||
-//         !data.fullName ||
-//         !data.selectedGender ||
-//         !data.address
-//       ) {
-//         resolve({
-//           errCode: 1,
-//           errMessage: "Missing required parameter!",
-//         });
-//       } else {
-//         let token = uuidv4();
-//         await emailService.sendSimpleEmail({
-//           reciverEmail: data.email,
-//           patientName: data.fullName,
-//           time: data.timeString,
-//           doctorName: data.doctorName,
-//           language: data.language,
-//           redirectLink: buildUrlEmail(data.doctorId, token),
-//         });
-//         // Update patient
-//         let user = await db.User.findOrCreate({
-//           where: { email: data.email },
-//           defaults: {
-//             email: data.email,
-//             roleId: "R3",
-//             firstName: data.fullName,
-//             gender: data.selectedGender,
-//             address: data.address,
-//             phonenumber: data.phoneNumber,
-//           },
-//         });
 
-//         // Create a booking record
-//         if (user && user[0]) {
-//           await db.Booking.findOrCreate({
-//             where: { patientId: user[0].id },
-//             defaults: {
-//               statusId: "S1",
-//               doctorId: data.doctorId,
-//               patientId: user[0].id,
-//               date: data.date,
-//               timeType: data.timeType,
-//               token: token,
-//             },
-//           });
-//         }
-//         resolve({
-//           errCode: 0,
-//           errMessage: "Create a patient account with email success",
-//         });
-//       }
-//     } catch (e) {
-//       reject(e);
-//     }
-//   });
-// };
 const moment = require("moment");
 let postBookAppointment = (data) => {
   return new Promise(async (resolve, reject) => {
@@ -122,7 +60,24 @@ let postBookAppointment = (data) => {
           // appointmentDate: appointmentDate,
         },
       });
+      // console.log("user:", user);
+      // console.log("type of user:", typeof user);
+      // console.log("is Sequelize model instance:", user instanceof db.User);
+      if (!createdUser) {
+        let userInstance = await db.User.findOne({
+          where: { id: user.id },
+          raw: false,
+        });
 
+        if (userInstance) {
+          await userInstance.update({
+            firstName: data.fullName,
+            gender: data.selectedGender,
+            address: data.address,
+            phonenumber: data.phoneNumber,
+          });
+        }
+      }
       // Check bệnh nhân đã đặt lịch ngày đó chưa
       let existingBooking = await db.Booking.findOne({
         where: {

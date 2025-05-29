@@ -252,6 +252,48 @@ let getDetailDoctorById = (inputId) => {
   });
 };
 
+// let bulkCreateSchedule = (data) => {
+//   return new Promise(async (resolve, reject) => {
+//     try {
+//       if (!data.arrSchedule || !data.doctorId || !data.formateDate) {
+//         resolve({
+//           errCode: 1,
+//           errMessage: "Missing required parameter!",
+//         });
+//       } else {
+//         let schedule = data.arrSchedule;
+//         if (schedule && schedule.length > 0) {
+//           schedule = schedule.map((item) => {
+//             item.maxNumber = MAX_NUMBER_SCHEDULE;
+//             return item;
+//           });
+//         }
+
+//         let existing = await db.Schedule.findAll({
+//           where: { doctorId: data.doctorId, date: data.formateDate },
+//           attributes: ["timeType", "date", "doctorId", "maxNumber"],
+//           raw: true,
+//         });
+
+//         // compare different
+//         let toCreate = _.differenceWith(schedule, existing, (a, b) => {
+//           return a.timeType === b.timeType && +a.date === +b.date;
+//         });
+//         // create data
+//         if (toCreate && toCreate.length > 0) {
+//           await db.Schedule.bulkCreate(toCreate);
+//         }
+//         // await db.Schedule.bulkCreate(schedule);
+//         resolve({
+//           errCode: 0,
+//           errMessage: "OK",
+//         });
+//       }
+//     } catch (e) {
+//       reject(e);
+//     }
+//   });
+// };
 let bulkCreateSchedule = (data) => {
   return new Promise(async (resolve, reject) => {
     try {
@@ -269,29 +311,20 @@ let bulkCreateSchedule = (data) => {
           });
         }
 
-        // console.log("Check data send: ", schedule);
-        // console.log("Check data send: ", typeof schedule);
-        // get all existing data
-        let existing = await db.Schedule.findAll({
-          where: { doctorId: data.doctorId, date: data.formateDate },
-          attributes: ["timeType", "date", "doctorId", "maxNumber"],
-          raw: true,
+        // Xóa toàn bộ giờ cũ theo doctorId + date
+        await db.Schedule.destroy({
+          where: {
+            doctorId: data.doctorId,
+            date: data.formateDate,
+          },
         });
-        console.log("Check existing: ", existing);
-        console.log("Check schedule: ", schedule);
 
-        // compare different
-        let toCreate = _.differenceWith(schedule, existing, (a, b) => {
-          return a.timeType === b.timeType && +a.date === +b.date;
-        });
-        // create data
-        if (toCreate && toCreate.length > 0) {
-          await db.Schedule.bulkCreate(toCreate);
-        }
-        // await db.Schedule.bulkCreate(schedule);
+        // Tạo lại toàn bộ giờ mới
+        await db.Schedule.bulkCreate(schedule);
+
         resolve({
           errCode: 0,
-          errMessage: "OK",
+          errMessage: "Save schedule successfully!",
         });
       }
     } catch (e) {
@@ -544,6 +577,50 @@ let sendKemedy = (data) => {
     }
   });
 };
+let deleteDoctorById = (doctorId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      if (!doctorId) {
+        resolve({
+          errCode: 1,
+          errMessage: "Missing required parameter!",
+        });
+        return;
+      }
+
+      // Kiểm tra bác sĩ có tồn tại không
+      let doctor = await db.User.findOne({
+        where: { id: doctorId, roleId: "R2" },
+      });
+
+      if (!doctor) {
+        resolve({
+          errCode: 2,
+          errMessage: "Doctor not found!",
+        });
+        return;
+      }
+
+      // Xóa các bản ghi liên quan
+      await db.Doctor_Infor.destroy({ where: { doctorId: doctorId } });
+      await db.Markdown.destroy({ where: { doctorId: doctorId } });
+      await db.Schedule.destroy({ where: { doctorId: doctorId } });
+      await db.Booking.destroy({ where: { doctorId: doctorId } });
+
+      // Xóa bác sĩ khỏi bảng User
+      await db.User.destroy({ where: { id: doctorId } });
+
+      resolve({
+        errCode: 0,
+        errMessage: "Doctor deleted successfully!",
+      });
+    } catch (e) {
+      console.log(e);
+      reject(e);
+    }
+  });
+};
+
 module.exports = {
   getTopDoctorHome: getTopDoctorHome,
   getAllDoctors: getAllDoctors,
@@ -555,4 +632,5 @@ module.exports = {
   getProfileDoctorById: getProfileDoctorById,
   getListPatientForDoctor: getListPatientForDoctor,
   sendKemedy: sendKemedy,
+  deleteDoctorById: deleteDoctorById,
 };

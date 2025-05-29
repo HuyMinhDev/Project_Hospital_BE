@@ -34,10 +34,6 @@ let handleUserLogin = (email, password) => {
           ],
           where: { email: email },
           raw: true,
-          //   attributes: {
-          //     include: ["email", "roleId"], // define colums that you want to show
-          //     // exclude: [], // define colums that you don't want
-          //   },
         });
         if (user) {
           // compare password

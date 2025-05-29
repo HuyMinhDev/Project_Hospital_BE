@@ -37,6 +37,7 @@ let initWebRoutes = (app) => {
     "/api/get-detail-doctor-by-id",
     doctorController.getDetailDoctorById
   );
+  router.delete("/api/delete-doctor-by-id", doctorController.deleteDoctorById);
 
   router.post("/api/bulk-create-schedule", doctorController.bulkCreateSchedule);
 

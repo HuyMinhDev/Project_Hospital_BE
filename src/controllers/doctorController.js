@@ -134,6 +134,27 @@ let sendKemedy = async (req, res) => {
     });
   }
 };
+let deleteDoctorById = async (req, res) => {
+  try {
+    const { doctorId } = req.body;
+    if (!doctorId) {
+      return res.status(400).json({
+        errCode: 1,
+        errMessage: "Missing required parameter: doctorId",
+      });
+    }
+
+    const result = await doctorService.deleteDoctorById(doctorId);
+    return res.status(200).json(result);
+  } catch (e) {
+    console.log(e);
+    return res.status(200).json({
+      errCode: -1,
+      errMessage: "Error from the server",
+    });
+  }
+};
+
 module.exports = {
   getTopDoctorHome: getTopDoctorHome,
   getAllDoctors: getAllDoctors,
@@ -145,4 +166,5 @@ module.exports = {
   getProfileDoctorById: getProfileDoctorById,
   getListPatientForDoctor: getListPatientForDoctor,
   sendKemedy: sendKemedy,
+  deleteDoctorById: deleteDoctorById,
 };
